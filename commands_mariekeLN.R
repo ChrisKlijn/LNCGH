@@ -60,16 +60,22 @@ KCLNLum <- KC[,c(1,2,which(sampleInfo$Type == 'LN' &
 
 
 KCcollTLN <- calcSpmCollection(data=KCtum, mirrorLocs=hsMirrorLocs, data2=KCLN)
-KCcollTLNcomp <- compareSpmCollection(KCcollTLN, nperms=1000, fdr=0.1)
-sigReg <- getSigRegionsCompKC(KCcollTLNcomp, fdr=.01)
+KCcollTLNcomp <- compareSpmCollection(KCcollTLN, nperms=1000)
+sigReg <- getSigRegionsCompKC(KCcollTLNcomp, fdr=.05)
 
 KCcollTLN_TN <- calcSpmCollection(data=KCtumTN, mirrorLocs=hsMirrorLocs, data2=KCLNTN)
-KCcollTLN_TNcomp <- compareSpmCollection(KCcollTLN_TN, nperms=1000, fdr=0.1)
-sigReg_TN <- getSigRegionsCompKC(KCcollTLN_TNcomp, fdr=.01)
+KCcollTLN_TNcomp <- compareSpmCollection(KCcollTLN_TN, nperms=1000)
+sigReg_TN <- getSigRegionsCompKC(KCcollTLN_TNcomp, fdr=.05)
 
 KCcollTLN_Lum <- calcSpmCollection(data=KCtumLum, mirrorLocs=hsMirrorLocs, data2=KCLNLum)
-KCcollTLN_Lumcomp <- compareSpmCollection(KCcollTLN_Lum, nperms=1000, fdr=0.1)
-sigReg_TN <- getSigRegionsCompKC(KCcollTLN_Lumcomp, fdr=.01)
+KCcollTLN_Lumcomp <- compareSpmCollection(KCcollTLN_Lum, nperms=1000)
+sigReg_Lum <- getSigRegionsCompKC(KCcollTLN_Lumcomp, fdr=.05)
+
+
+plot(KCcollTLNcomp, sigRegions=sigReg, col1=colors()[122], col2=colors()[148])
+plot(KCcollTLN_TNcomp, sigRegions=sigReg_TN)
+plot(KCcollTLN_Lumcomp, sigRegions=sigReg_Lum)
+
 
 #------------------------------------------------------------------
 # Per Sample delta profile
@@ -96,5 +102,47 @@ for (t in 1:length(uniqTumNum)) {
 }
 
 plotRawCghDotPlot(KCdataSet=diffKC, mirrorLocs=hsMirrorLocs, samples=1, doFilter=T, plotTitle='Tumor 44')
+
+#------------------------------------------------------------------
+# Plot Per Pair Three plots
+#------------------------------------------------------------------
+
+# Originals
+
+uniqTumNum <- unique(sampleInfo$NR)
+
+for (t in 1:length(uniqTumNum)) {
+  png(file=paste('dotFigures/oriSample_', uniqTumNum[t], '.png', sep=''), width=1280, height=800)
+  par(mfrow=c(2,1))
+  plotRawCghDotPlot(KCdataSet=KC, mirrorLocs=hsMirrorLocs, 
+    samples=which(sampleInfo$NR == uniqTumNum[t] & sampleInfo$Type == 'Tumor'), 
+    doFilter=T, plotTitle=paste('Tumor - Sample', uniqTumNum[t]))
+  plotRawCghDotPlot(KCdataSet=KC, mirrorLocs=hsMirrorLocs, 
+    samples=which(sampleInfo$NR == uniqTumNum[t] & sampleInfo$Type == 'LN'), 
+    doFilter=T, plotTitle=paste('Lymph Node - Sample', uniqTumNum[t]))
+  dev.off()
+}
+
+# Quantile Normalized
+
+uniqTumNum <- unique(sampleInfo$NR)
+
+for (t in 1:length(uniqTumNum)) {
+  png(file=paste('dotFigures/sample_', uniqTumNum[t], '.png', sep=''), width=1280, height=1024)
+  par(mfrow=c(3,1))
+  plotRawCghDotPlot(KCdataSet=KCnorm, mirrorLocs=hsMirrorLocs, 
+    samples=which(sampleInfo$NR == uniqTumNum[t] & sampleInfo$Type == 'Tumor'), 
+    doFilter=T, plotTitle=paste('Tumor - Sample', uniqTumNum[t]))
+  plotRawCghDotPlot(KCdataSet=KCnorm, mirrorLocs=hsMirrorLocs, 
+    samples=which(sampleInfo$NR == uniqTumNum[t] & sampleInfo$Type == 'LN'), 
+    doFilter=T, plotTitle=paste('Lymph Node - Sample', uniqTumNum[t]))
+  plotRawCghDotPlot(KCdataSet=diffKC, mirrorLocs=hsMirrorLocs, 
+    samples=grep(paste(uniqTumNum[t], '$', sep=''), colnames(diffKC)) - 2, 
+    doFilter=T, plotTitle=paste('Difference - Sample', uniqTumNum[t]))
+  dev.off()
+}
+
+
+
 
 
