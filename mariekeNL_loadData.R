@@ -19,6 +19,7 @@ fileNamesData <- dir(pattern='reduce.txt')
 for (i in 1:length(fileNamesData)) {
 	cat(fileNamesData[i], '\n')
 	tempFrame <- read.delim(fileNamesData[i], stringsAsFactors=F)
+  tempFrame <- tempFrame[order(tempFrame$PROBE_ID),]
 	if (i == 1) {
 		resultFrame <- tempFrame
 		colnames(resultFrame)[4] <- fileNamesData[i]
