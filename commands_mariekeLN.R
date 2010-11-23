@@ -71,16 +71,49 @@ KCcollTLN_Lum <- calcSpmCollection(data=KCtumLum, mirrorLocs=hsMirrorLocs, data2
 KCcollTLN_Lumcomp <- compareSpmCollection(KCcollTLN_Lum, nperms=1000)
 sigReg_Lum <- getSigRegionsCompKC(KCcollTLN_Lumcomp, fdr=.05)
 
-
+pdf(file='Figures/compKC_all.pdf', width=15, height=5)
 plot(KCcollTLNcomp, sigRegions=sigReg, col1=colors()[122], col2=colors()[148])
-plot(KCcollTLN_TNcomp, sigRegions=sigReg_TN)
-plot(KCcollTLN_Lumcomp, sigRegions=sigReg_Lum)
+abline(h=0)
+dev.off()
 
+pdf(file='Figures/compKC_TN.pdf', width=15, height=5)
+plot(KCcollTLN_TNcomp, sigRegions=sigReg_TN, col1=colors()[122], col2=colors()[148])
+abline(h=0)
+dev.off()
+
+pdf(file='Figures/compKC_LUM.pdf', width=15, height=5)
+plot(KCcollTLN_Lumcomp, sigRegions=sigReg_Lum, col1=colors()[122], col2=colors()[148])
+abline(h=0)
+dev.off()
 
 #------------------------------------------------------------------
-# Per Sample delta profile
+# Sandbox
 #------------------------------------------------------------------
 
+plot(KCtum[order(KCtum$chrom, KCtum$maploc, decreasing=F),1], pch='.')
+
+#------------------------------------------------------------------
+# Correlation Plots
+#------------------------------------------------------------------
+
+library(gplots)
+
+sampNames <- c(colnames(KCtum)[3:ncol(KCtum)], colnames(KCLN)[3:ncol(KCLN)])
+labs <- sampleInfo$NR[match(sampNames, sampleInfo$File_name)]
+TLNlabs <- as.factor(sampleInfo$Type[match(sampNames, sampleInfo$File_name)]))
+sampCorMat <- cor(KCcollTLNcomp@spmCollection@data, use='na.or.complete')
+
+pdf(file='Figures/corrMat_T_LN.pdf', width=7, height=7)
+heatmap(sampCorMat, scale='none', labRow=labs, labCol=labs, 
+  col=colorpanel(265, low='blue', high='yellow'), 
+  ColSideColors=colors()[c(122, 148)][as.numeric(TLNlabs)],
+  main='Clustered Correlation Matrix - per-sample KCsmart curve')
+dev.off()
+
+#------------------------------------------------------------------
+# Per sample difference
+#------------------------------------------------------------------
+ 
 library(preprocessCore)
 
 # Quantile normalization
@@ -101,7 +134,12 @@ for (t in 1:length(uniqTumNum)) {
   colnames(diffKC) <- gsub('temp', paste('Sample', uniqTumNum[t], sep='-'), colnames(diffKC))
 }
 
-plotRawCghDotPlot(KCdataSet=diffKC, mirrorLocs=hsMirrorLocs, samples=1, doFilter=T, plotTitle='Tumor 44')
+# KCsmart of the difference
+
+diffSpm <- calcSpm(data=diffKC, mirrorLocs=hsMirrorLocs)
+pdf(file='Figures/diffKCsmart.pdf', width=15, height=12)
+plot(diffSpm)
+dev.off()
 
 #------------------------------------------------------------------
 # Plot Per Pair Three plots
