@@ -87,10 +87,43 @@ abline(h=0)
 dev.off()
 
 #------------------------------------------------------------------
+# KCsmart comparative
+#
+# All samples, excluding sample Nr. 592 (due to mixed histology)
+#------------------------------------------------------------------
+
+KCtum_excl592 <- KCtum[,-which(colnames(KCtum) %in% sampleInfo$File_name[sampleInfo$NR == 592])]
+KCLN_excl592 <- KCLN[,-which(colnames(KCLN) %in% sampleInfo$File_name[sampleInfo$NR == 592])]
+KCtumLum_excl592 <- KCTumLum[,-which(colnames(KCTumLum) %in% sampleInfo$File_name[sampleInfo$NR == 592])]
+KCLNLum_excl592 <- KCLNLum[,-which(colnames(KCLNLum) %in% sampleInfo$File_name[sampleInfo$NR == 592])]
+
+
+KCcollTLN_excl592 <- calcSpmCollection(data=KCtum_excl592, mirrorLocs=hsMirrorLocs, data2=KCLN_excl592)
+KCcollTLNcomp_excl592 <- compareSpmCollection(KCcollTLN_excl592, nperms=1000)
+sigReg_all_excl592 <- getSigRegionsCompKC(KCcollTLNcomp_excl592, fdr=.05)
+
+
+KCcollTLN_Lum_excl592 <- calcSpmCollection(data=KCtumLum_excl592, mirrorLocs=hsMirrorLocs, 
+  data2=KCLNLum_excl592)
+KCcollTLN_Lum_comp_excl592 <- compareSpmCollection(KCcollTLN_Lum_excl592, nperms=1000)
+sigReg_Lum_excl592 <- getSigRegionsCompKC(KCcollTLN_Lum_comp_excl592, fdr=.05)
+
+
+#------------------------------------------------------------------
 # Sandbox
 #------------------------------------------------------------------
 
 plot(KCtum[order(KCtum$chrom, KCtum$maploc, decreasing=F),1], pch='.')
+
+par(mfrow=c(2,1))
+plotRawCghDotPlot(KCdataSet=KC, mirrorLocs=hsMirrorLocs, 
+    samples=which(sampleInfo$NR == 104 & sampleInfo$Type == 'Tumor'), 
+    doFilter=T, plotTitle=paste('Tumor - Sample', uniqTumNum[t]),
+    chromosomes=11)
+plotRawCghDotPlot(KCdataSet=KC, mirrorLocs=hsMirrorLocs, 
+    samples=which(sampleInfo$NR == 245 & sampleInfo$Type == 'Tumor'), 
+    doFilter=T, plotTitle=paste('Tumor - Sample', uniqTumNum[t]),
+    chromosomes=11)
 
 #------------------------------------------------------------------
 # Correlation Plots
