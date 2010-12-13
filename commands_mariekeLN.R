@@ -39,6 +39,20 @@ plotRawCghDotPlot(KCdataSet=KC, mirrorLocs=hsMirrorLocs, samples=2, doFilter=T, 
 dev.off()
 
 #------------------------------------------------------------------
+# Requested tumor plots
+#------------------------------------------------------------------
+
+plotSamp <- which(sampleInfo$NR == 44 & sampleInfo$Type == 'Tumor')
+postscript(file='dotFigures/t44.eps', width=12, height=5, paper='special', horizontal=F)
+plotRawCghDotPlot(KCdataSet=KC, mirrorLocs=hsMirrorLocs, samples=plotSamp, doFilter=T, plotTitle='Tumor 44')
+dev.off()
+
+plotSamp <- which(sampleInfo$NR == 565 & sampleInfo$Type == 'Tumor')
+postscript(file='dotFigures/t565.eps', width=12, height=5, paper='special', horizontal=F)
+plotRawCghDotPlot(KCdataSet=KC, mirrorLocs=hsMirrorLocs, samples=plotSamp, doFilter=T, plotTitle='Tumor 565')
+dev.off()
+
+#------------------------------------------------------------------
 # KCsmart comparative
 #
 # All samples, Tumor vs. Lymph Node
