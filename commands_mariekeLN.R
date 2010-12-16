@@ -61,6 +61,14 @@ dev.off()
 library(KCsmart)
 data(hsMirrorLocs)
 
+# Remove sample 592
+
+KC <- KC[,-(which(sampleInfo$NR == 592) + 2)]
+sampleInfo <- sampleInfo[-which(sampleInfo$NR == 592),]
+
+# Check if the samples are ordered the same in the dataframe and the sampleinfo
+all.equal(colnames(KC)[3:ncol(KC)], sampleInfo$File_name)
+
 # Separate the data
 
 KCtum <- KC[,c(1,2,which(sampleInfo$Type == 'Tumor')+2)]
