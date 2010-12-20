@@ -80,7 +80,6 @@ KCLNTN <- KC[,c(1,2,which(sampleInfo$Type == 'LN' &
 KCLNLum <- KC[,c(1,2,which(sampleInfo$Type == 'LN' & 
   (sampleInfo$NR %in% sampleInfo$NR[sampleInfo$Mol_subtype == 'luminal']))+2)]
 
-
 KCcollTLN <- calcSpmCollection(data=KCtum, mirrorLocs=hsMirrorLocs, data2=KCLN)
 KCcollTLNcomp <- compareSpmCollection(KCcollTLN, nperms=1000)
 sigReg <- getSigRegionsCompKC(KCcollTLNcomp, fdr=.05)
@@ -98,12 +97,16 @@ plot(KCcollTLNcomp, sigRegions=sigReg, col1=colors()[122], col2=colors()[148])
 abline(h=0)
 dev.off()
 
-pdf(file='Figures/compKC_TN.pdf', width=15, height=5)
+load('allSampl_TNcomp.Rda')
+#pdf(file='Figures/compKC_TN.pdf', width=15, height=5)
+postscript(file='Figures/compKC_TN.eps', width=15, height=5, paper='special', horizontal=F)
 plot(KCcollTLN_TNcomp, sigRegions=sigReg_TN, col1=colors()[122], col2=colors()[148])
 abline(h=0)
 dev.off()
 
-pdf(file='Figures/compKC_LUM.pdf', width=15, height=5)
+load('allSampl_Lumcomp.Rda')
+#pdf(file='Figures/compKC_LUM.pdf', width=15, height=5)
+postscript(file='Figures/compKC_Lum.eps', width=15, height=5, paper='special', horizontal=F)
 plot(KCcollTLN_Lumcomp, sigRegions=sigReg_Lum, col1=colors()[122], col2=colors()[148])
 abline(h=0)
 dev.off()
