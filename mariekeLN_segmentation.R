@@ -69,6 +69,21 @@ sampleInfo$ER_new[seq(1, nrow(a), 2)] <- sampleInfo$ER_new[seq(2, nrow(a), 2)]
 sampleInfo$PR_new[seq(1, nrow(a), 2)] <- sampleInfo$PR_new[seq(2, nrow(a), 2)]
 sampleInfo$Basal_Nielsen_IHC[seq(1, nrow(a), 2)] <- sampleInfo$Basal_Nielsen_IHC[seq(2, nrow(a), 2)]
 
+# Overlapping segments per tumor-lymphnode pairs
+
+# Run local, to use correct version of R and Bioconductor
+
+setwd('/home/cklijn/work/Matlab/Data/NKI Data/Marieke analysis/LN')
+load('marieke_segResult.Rda')
+
+uniqNR <- unique(sampleInfo$NR)
+
+tempSeg <- KCseg_filter[KCseg_filter$ID %in% sampleInfo$File_name[sampleInfo$NR == uniqNR[i]],]
+tempIR <- IRanges
+
+tempGRanges <- GRanges(seqnames=tempSeg$chrom, ranges=tempIR, strand=rep('+', nrow(tempSeg)),
+  values=tempSeg$ID)
+# -------------------------------------------------------------------
 # Plotting
 
 library(ggplot2)
