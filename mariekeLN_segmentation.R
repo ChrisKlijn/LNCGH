@@ -75,19 +75,71 @@ sampleInfo$Basal_Nielsen_IHC[seq(1, nrow(a), 2)] <- sampleInfo$Basal_Nielsen_IHC
 
 setwd('/home/cklijn/work/Matlab/Data/NKI Data/Marieke analysis/LN')
 load('marieke_segResult.Rda')
+library(GenomicRanges)
 
+# Do analysis only on segments > .2 or < -.2
+KCseg_filter_2 <- KCseg_filter[abs(KCseg_filter$seg.mean) > .2,]
 uniqNR <- unique(sampleInfo$NR)
+resultCount <- vector(mode='numeric', length=length(uniqNR))
 
-tempSeg <- KCseg_filter[KCseg_filter$ID %in% sampleInfo$File_name[sampleInfo$NR == uniqNR[i]],]
-tempIR <- IRanges
+for (i in 1:length(uniqNR)) {
+  tempSegTum <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'Tumor')],]
+  tempSegLN <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'LN')],]
+  resultCount[i] <- nrow(tempSegLN) - nrow(tempSegTum)
+}
 
-tempGRanges <- GRanges(seqnames=tempSeg$chrom, ranges=tempIR, strand=rep('+', nrow(tempSeg)),
-  values=tempSeg$ID)
+countResultFrame <- as.data.frame(resultCount)
+countResultFrame$NR <- sampleInfo$NR[seq(1,nrow(sampleInfo),2)] 
+countResultFrame$BRCAness <- sampleInfo$BRCAness[seq(1,nrow(sampleInfo),2)]
+countResultFrame$Mol_subtype <- sampleInfo$Mol_subtype[seq(1,nrow(sampleInfo),2)]
+
+## SANDBOX AREA
+
+tempIRTum <- IRanges(start=tempSegTum$loc.start, end=tempSegTum$loc.end)
+tempIRLN <- IRanges(start=tempSegLN$loc.start, end=tempSegLN$loc.end)
+
+tempGRangesTum <- GRanges(seqnames=tempSegTum$chrom, ranges=tempIRTum, strand=rep('+', nrow(tempSegTum)),
+  values=tempSegTum$ID, score=tempSegTum$seg.mean)
+
+tempGRangesLN <- GRanges(seqnames=tempSegLN$chrom, ranges=tempIRLN, strand=rep('+', nrow(tempSegLN)),
+  values=tempSegLN$ID, score=tempSegLN$seg.mean)
+
+## SANDBOX AREA
+
+# Calculate differences between tumor and ln
+
+for (i in 1:length(uniqNR)) {
+  tempSegTum <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'Tumor')],]
+  tempSegLN <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'LN')],]
+}
+
 # -------------------------------------------------------------------
 # Plotting
 
 library(ggplot2)
 postscript(file='Figures/boxplot_seg2_brcaness.eps', paper='special', horizontal=F, width=5, height=4)
-qplot(data=sampleInfo, x=BRCAness, y=segcount2, geom='boxplot', fill=BRCAness) + theme_bw()
+qplot(data=sampleInfo, x=BRCAness, y=segcount2, geom='boxplot', fill=BRCAness) + theme_bw() +
+  opts(title='Segment counts - BRCAness')
+dev.off()
+
+postscript(file='Figures/boxplot_seg2_molsubtype.eps', paper='special', horizontal=F, width=5, height=4)
+qplot(data=sampleInfo, x=Mol_subtype, y=segcount2, geom='boxplot', fill=Mol_subtype) + theme_bw() + 
+  opts(title='Segment counts - Molecular Subtype')
+dev.off()
+
+# Segment differences
+
+postscript(file='Figures/scatter_segmentdiff_2.eps', paper='special', horizontal=F, width=5, height=4)
+qplot(data=countResultFrame, x=BRCAness, y=resultCount, position=position_jitter(w=0.3, h=0), 
+  size=I(3), col=BRCAness) + opts(title='Verschil in segmenten > < .2 - T en LN') + theme_bw()
+dev.off()
+
+postscript(file='Figures/scatter_segmentdiff_2_molsub.eps', paper='special', horizontal=F, width=5, height=4)
+qplot(data=countResultFrame, x=Mol_subtype, y=resultCount, position=position_jitter(w=0.3, h=0), 
+  size=I(3), col=Mol_subtype) + opts(title='Verschil in segmenten > < .2 - T en LN') + theme_bw()
 dev.off()
 
