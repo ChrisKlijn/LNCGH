@@ -106,6 +106,11 @@ tempGRangesTum <- GRanges(seqnames=tempSegTum$chrom, ranges=tempIRTum, strand=re
 tempGRangesLN <- GRanges(seqnames=tempSegLN$chrom, ranges=tempIRLN, strand=rep('+', nrow(tempSegLN)),
   values=tempSegLN$ID, score=tempSegLN$seg.mean)
 
+shortSampleInfo <- sampleInfo[,c('File_name', 'Type', 'NR')]
+combinedSeg <- merge(x=KCseg_filter_2, y=shortSampleInfo, by.x='ID', 
+  by.y='File_name')
+
+
 ## SANDBOX AREA
 
 # Calculate differences between tumor and ln
