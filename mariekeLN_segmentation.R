@@ -11,7 +11,7 @@ setwd('/data/people/klijn/marieke')
 source('~/codeChris/generalFunctionsR/chris_cghdata_analysis.R')
 
 # Load data
-load('~/marieke/DNACopy/mariekeData.Rda')
+load('~/data/smallproj/mariekeLN/DNACopy/mariekeData.Rda')
 
 # Load clinical data
 sampleInfo <- read.delim('Clin_data_tumorLN.txt', stringsAsFactors=F)

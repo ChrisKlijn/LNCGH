@@ -5,8 +5,8 @@
 ## Christiaan Klijn
 ##----------------------------------------------------------------------
 
-# WD
-setwd('/data/people/klijn/marieke')
+# WD - medoid
+setwd('/home/klijn/data/smallproj/mariekeLN/')
 source('~/codeChris/generalFunctionsR/chris_cghdata_analysis.R')
 
 # Load data
