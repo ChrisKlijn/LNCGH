@@ -42,4 +42,17 @@ dataAve$chrom <- splitChromosomes(dataAve$chrom, dataAve$maploc)
 clonResult <- clonality.analysis(dataAve, sampleInfo$NR, nmad = 1.25, 
   reference=T, allpairs=F)
 
-  
+save(file='mariekeClonResult.Rda', list=c('clonResult', 'dataAve'))
+
+
+## Analysis
+
+pdf(file='Figures/clonality_plots.pdf', width=10, height=8)
+for (i in 1:nrow(clonResult$LR)) {
+  genomewidePlots(clonResult$OneStepSeg, clonResult$ChromClass, sampleInfo$NR, 
+    c(as.character(clonResult$LR$Sample1[i]), as.character(clonResult$LR$Sample2[i])), 
+    clonResult$LR, plot.as.in.analysis = TRUE)
+}
+dev.off()
+
+

@@ -26,11 +26,12 @@ all.equal(colnames(KC)[3:ncol(KC)], sampleInfo$File_name)
 library(gplots)
 
 # Load comparative analysis
+load('marieke_compKC.Rda')
 
-sampNames <- c(colnames(KCtum)[3:ncol(KCtum)], colnames(KCLN)[3:ncol(KCLN)])
+sampNames <- colnames(KC[3:ncol(KC)])
 labs <- sampleInfo$NR[match(sampNames, sampleInfo$File_name)]
-TLNlabs <- as.factor(sampleInfo$Type[match(sampNames, sampleInfo$File_name)]))
-sampCorMat <- cor(KCcollTLNcomp@spmCollection@data, use='na.or.complete')
+TLNlabs <- as.factor(sampleInfo$Type[match(sampNames, sampleInfo$File_name)])
+sampCorMat <- cor(KCcollTLN@data, use='na.or.complete')
 
 # pdf(file='Figures/corrMat_T_LN.pdf', width=7, height=7)
 postscript(file='Figures/corrMat_T_LN.eps', paper='special', horizontal=F, width=7, height=7)
@@ -39,5 +40,39 @@ heatmap(sampCorMat, scale='none', labRow=labs, labCol=labs,
   ColSideColors=colors()[c(122, 148)][as.numeric(TLNlabs)],
   main='Clustered Correlation Matrix - per-sample KCsmart curve')
 dev.off()
+
+#------------------------------------------------------------------
+# Dotplots of non-concordant samples
+#------------------------------------------------------------------
+
+library(KCsmart)
+data(hsMirrorLocs)
+
+# Patient samples 592 and 456 show disconcordance - plot them in a figure
+
+KC592 <- KC[,c(1,2, which(sampleInfo$NR == 592)+2)]
+
+png(file='Figures/Patient592.png', width=1600, height=800*(ncol(KC592)-2))
+  par(mfrow=c(ncol(KC592)-2, 1))
+  for (p in 1:(ncol(KC592)-2)) {
+    sampleNr <- which(sampleInfo$File_name == colnames(KC592)[p+2])
+    plotRawCghDotPlot(KCdataSet=KC592, samples=p,
+      mirrorLocs=hsMirrorLocs, doFilter=T, 
+      plotTitle=paste(sampleInfo[sampleNr, c('File_name','NR','Type') ], collapse=' '))
+  }
+dev.off()
+
+
+KC456 <- KC[,c(1,2, which(sampleInfo$NR == 456)+2)]
+png(file='Figures/Patient456.png', width=1600, height=800*(ncol(KC456)-2))
+  par(mfrow=c(ncol(KC456)-2, 1))
+  for (p in 1:(ncol(KC456)-2)) {
+    sampleNr <- which(sampleInfo$File_name == colnames(KC456)[p+2])
+    plotRawCghDotPlot(KCdataSet=KC456, samples=p,
+      mirrorLocs=hsMirrorLocs, doFilter=T, 
+      plotTitle=paste(sampleInfo[sampleNr, c('File_name','NR','Type') ], collapse=' '))
+  }
+dev.off()
+
 
 

@@ -28,6 +28,13 @@ all.equal(colnames(KC)[3:ncol(KC)], sampleInfo$File_name)
 library(KCsmart)
 data(hsMirrorLocs)
 
+TumLNclass <- which(sampleInfo$Type == 'Tumor')+2)
+KCcollTLN <- calcSpmCollection(data=KC, mirrorLocs=hsMirrorLocs, cl=TumLNclass)
+
+save(file='marieke_compKC.Rda', list=c('KCcollTLN'))
+
+##---------OLD code---------------
+
 # Separate the data
 
 KCtum <- KC[,c(1,2,which(sampleInfo$Type == 'Tumor')+2)]
@@ -38,11 +45,6 @@ KCLNTN <- KC[,c(1,2,which(sampleInfo$Type == 'LN' &
   (sampleInfo$NR %in% sampleInfo$NR[sampleInfo$Mol_subtype == 'TN']))+2)]
 KCLNLum <- KC[,c(1,2,which(sampleInfo$Type == 'LN' & 
   (sampleInfo$NR %in% sampleInfo$NR[sampleInfo$Mol_subtype == 'luminal']))+2)]
-
-TumLNclass <- which(sampleInfo$Type == 'Tumor')+2)
-KCcollTLN <- calcSpmCollection(data=KC, mirrorLocs=hsMirrorLocs, cl=TumLNclass)
-
-save(file='marieke_compKC.Rda', list=c('KCcollTLN'))
 
 KCcollTLN <- calcSpmCollection(data=KCtum, mirrorLocs=hsMirrorLocs, data2=KCLN)
 KCcollTLNcomp <- compareSpmCollection(KCcollTLN, nperms=1000)
