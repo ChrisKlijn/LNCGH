@@ -30,11 +30,20 @@ load('marieke_compKC.Rda')
 
 sampNames <- colnames(KC[3:ncol(KC)])
 labs <- sampleInfo$NR[match(sampNames, sampleInfo$File_name)]
+# add additional info to the redone samples
+labs[which(sampleInfo$File_name == '455952A01')] <- 
+  paste(labs[which(sampleInfo$File_name == '455952A01')], 'Exp')
+labs[which(sampleInfo$File_name == '455952A02')] <- 
+  paste(labs[which(sampleInfo$File_name == '455952A02')], 'Diff')
+
+# Add Tumor/LN to labels
+labs[sampleInfo$Type == 'LN'] <- paste(labs[sampleInfo$Type == 'LN'], 'LN')
+
 TLNlabs <- as.factor(sampleInfo$Type[match(sampNames, sampleInfo$File_name)])
 sampCorMat <- cor(KCcollTLN@data, use='na.or.complete')
 
 # pdf(file='Figures/corrMat_T_LN.pdf', width=7, height=7)
-postscript(file='Figures/corrMat_T_LN.eps', paper='special', horizontal=F, width=7, height=7)
+postscript(file='Figures/corrMat_T_LN_v2.eps', paper='special', horizontal=F, width=7, height=7)
 heatmap(sampCorMat, scale='none', labRow=labs, labCol=labs, 
   col=colorpanel(265, low='blue', high='yellow'), 
   ColSideColors=colors()[c(122, 148)][as.numeric(TLNlabs)],

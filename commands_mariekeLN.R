@@ -239,6 +239,247 @@ for (t in 1:length(uniqTumNum)) {
   dev.off()
 }
 
+# ----------------------------------------------------------------------------___
+# SANDBOX and old code
+# ----------------------------------------------------------------------------___
+
+
+KCseg_filter <- KCseg$output[KCseg$output$num.mark > 9,]
+KCseg_filter$ID <- gsub('X', '', KCseg_filter$ID)
+
+segResultFrame <- data.frame(ID=unique(KCseg_filter$ID), 
+  segcount5=0,segcount2=0, segcountAll=0,
+  stringsAsFactors=F)
+
+
+for (r in 1:nrow(segResultFrame)) {
+    segResultFrame$segcount5[r] <- 
+      sum(abs(KCseg_filter$seg.mean[KCseg_filter$ID == segResultFrame$ID[r]]) > .5)
+    segResultFrame$segcount2[r] <- 
+      sum(abs(KCseg_filter$seg.mean[KCseg_filter$ID == segResultFrame$ID[r]]) > .2)
+    segResultFrame$segcountAll[r] <- 
+      sum(KCseg_filter$ID == segResultFrame$ID[r])
+}
+
+sampleInfo <- merge(x=sampleInfo, y=segResultFrame, by.x='File_name', by.y='ID')
+
+# Clean up Sampleinfo
+sampleInfo <- sampleInfo[order(sampleInfo$NR, sampleInfo$Type),]
+sampleInfo$Mol_subtype[seq(1, nrow(a), 2)] <- sampleInfo$Mol_subtype[seq(2, nrow(a), 2)]
+sampleInfo$Treatment[seq(1, nrow(a), 2)] <- sampleInfo$Treatment[seq(2, nrow(a), 2)]
+sampleInfo$LN_10[seq(1, nrow(a), 2)] <- sampleInfo$LN_10[seq(2, nrow(a), 2)]
+sampleInfo$BRgrade[seq(1, nrow(a), 2)] <- sampleInfo$BRgrade[seq(2, nrow(a), 2)]
+sampleInfo$recurrencedeath[seq(1, nrow(a), 2)] <- sampleInfo$recurrencedeath[seq(2, nrow(a), 2)]
+sampleInfo$osstat[seq(1, nrow(a), 2)] <- sampleInfo$osstat[seq(2, nrow(a), 2)]
+sampleInfo$B1_classifier[seq(1, nrow(a), 2)] <- sampleInfo$B1_classifier[seq(2, nrow(a), 2)]
+sampleInfo$B2_classifier[seq(1, nrow(a), 2)] <- sampleInfo$B2_classifier[seq(2, nrow(a), 2)]
+sampleInfo$BRCAness[seq(1, nrow(a), 2)] <- sampleInfo$BRCAness[seq(2, nrow(a), 2)]
+sampleInfo$ER_new[seq(1, nrow(a), 2)] <- sampleInfo$ER_new[seq(2, nrow(a), 2)]
+sampleInfo$PR_new[seq(1, nrow(a), 2)] <- sampleInfo$PR_new[seq(2, nrow(a), 2)]
+sampleInfo$Basal_Nielsen_IHC[seq(1, nrow(a), 2)] <- sampleInfo$Basal_Nielsen_IHC[seq(2, nrow(a), 2)]
+
+# Overlapping segments per tumor-lymphnode pairs
+
+# Run local, to use correct version of R and Bioconductor
+
+setwd('/home/cklijn/work/Matlab/Data/NKI Data/Marieke analysis/LN')
+load('marieke_segResult.Rda')
+library(GenomicRanges)
+
+# Do analysis only on segments > .2 or < -.2
+KCseg_filter_2 <- KCseg_filter[abs(KCseg_filter$seg.mean) > .2,]
+uniqNR <- unique(sampleInfo$NR)
+resultCount <- vector(mode='numeric', length=length(uniqNR))
+
+for (i in 1:length(uniqNR)) {
+  tempSegTum <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'Tumor')],]
+  tempSegLN <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'LN')],]
+  resultCount[i] <- nrow(tempSegLN) - nrow(tempSegTum)
+}
+
+countResultFrame <- as.data.frame(resultCount)
+countResultFrame$NR <- sampleInfo$NR[seq(1,nrow(sampleInfo),2)] 
+countResultFrame$BRCAness <- sampleInfo$BRCAness[seq(1,nrow(sampleInfo),2)]
+countResultFrame$Mol_subtype <- sampleInfo$Mol_subtype[seq(1,nrow(sampleInfo),2)]
+
+## SANDBOX AREA
+
+tempIRTum <- IRanges(start=tempSegTum$loc.start, end=tempSegTum$loc.end)
+tempIRLN <- IRanges(start=tempSegLN$loc.start, end=tempSegLN$loc.end)
+
+tempGRangesTum <- GRanges(seqnames=tempSegTum$chrom, ranges=tempIRTum, strand=rep('+', nrow(tempSegTum)),
+  values=tempSegTum$ID, score=tempSegTum$seg.mean)
+
+tempGRangesLN <- GRanges(seqnames=tempSegLN$chrom, ranges=tempIRLN, strand=rep('+', nrow(tempSegLN)),
+  values=tempSegLN$ID, score=tempSegLN$seg.mean)
+
+shortSampleInfo <- sampleInfo[,c('File_name', 'Type', 'NR')]
+combinedSeg <- merge(x=KCseg_filter_2, y=shortSampleInfo, by.x='ID', 
+  by.y='File_name')
+
+
+## SANDBOX AREA
+
+# Calculate differences between tumor and ln
+
+for (i in 1:length(uniqNR)) {
+  tempSegTum <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'Tumor')],]
+  tempSegLN <- KCseg_filter_2[KCseg_filter_2$ID %in% sampleInfo$File_name[(sampleInfo$NR == uniqNR[i]) &
+    (sampleInfo$Type == 'LN')],]
+}
+
+# -------------------------------------------------------------------
+# Plotting
+
+library(ggplot2)
+postscript(file='Figures/boxplot_seg2_brcaness.eps', paper='special', horizontal=F, width=5, height=4)
+qplot(data=sampleInfo, x=BRCAness, y=segcount2, geom='boxplot', fill=BRCAness) + theme_bw() +
+  opts(title='Segment counts - BRCAness')
+dev.off()
+
+postscript(file='Figures/boxplot_seg2_molsubtype.eps', paper='special', horizontal=F, width=5, height=4)
+qplot(data=sampleInfo, x=Mol_subtype, y=segcount2, geom='boxplot', fill=Mol_subtype) + theme_bw() + 
+  opts(title='Segment counts - Molecular Subtype')
+dev.off()
+
+# Segment differences
+
+postscript(file='Figures/scatter_segmentdiff_2.eps', paper='special', horizontal=F, width=5, height=4)
+qplot(data=countResultFrame, x=BRCAness, y=resultCount, position=position_jitter(w=0.3, h=0), 
+  size=I(3), col=BRCAness) + opts(title='Verschil in segmenten > < .2 - T en LN') + theme_bw()
+dev.off()
+
+postscript(file='Figures/scatter_segmentdiff_2_molsub.eps', paper='special', horizontal=F, width=5, height=4)
+qplot(data=countResultFrame, x=Mol_subtype, y=resultCount, position=position_jitter(w=0.3, h=0), 
+  size=I(3), col=Mol_subtype) + opts(title='Verschil in segmenten > < .2 - T en LN') + theme_bw()
+dev.off()
+
+
+
+# -------------------------------------------------------------------
+
+# Quantile normalization
+dataMatrix <- as.matrix(KC[,3:ncol(KC)])
+dataMatrix <- normalize.quantiles(dataMatrix)
+KCnorm <- KC
+KCnorm[,3:ncol(KCnorm)] <- dataMatrix
+
+# -------------------------------------------------------------------
+# Muck code, linear regression
+# -------------------------------------------------------------------
+
+smallKC <- KC[,c(1,2,3,4)]
+smallSeg <- subset(KCseg, samplelist=paste('X', colnames(KC)[c(3,4)], sep=''))
+smallFreq <- glFrequency(smallSeg, .2)
+
+ind <- smallFreq$gain == 0 & smallFreq$loss == 0
+g0 <- smallFreq$gain == 0
+
+par(mfrow=c(2,2))
+plot(smallKC[!ind, 2], smallKC[!ind,3] + 2*smallKC[!ind, 1], pch='.')
+abline(h=2*unique(smallKC$chrom))
+plot(smallKC[ind, 2], smallKC[ind,3] + 2*smallKC[ind, 1], pch='.')
+abline(h=2*unique(smallKC$chrom))
+plot(smallKC[!ind, 2], smallKC[!ind,4] + 2*smallKC[!ind, 1], pch='.')
+abline(h=2*unique(smallKC$chrom))
+plot(smallKC[ind, 2], smallKC[ind,4] + 2*smallKC[ind, 1], pch='.')
+abline(h=2*unique(smallKC$chrom))
+
+par(mfrow=c(1,2))
+plot(smallKC[smallFreq$gain == 1, 2], smallKC[smallFreq$gain == 1,3] + 3*smallKC[smallFreq$gain == 1, 1], 
+  pch='.', col='red')
+points(smallKC[smallFreq$loss == -1, 2], smallKC[smallFreq$loss == -1,3] + 3*smallKC[smallFreq$loss == -1, 1], 
+  pch='.', col='green')
+
+abline(h=2*unique(smallKC$chrom))
+plot(smallKC[ind, 2], smallKC[ind,3] + 2*smallKC[ind, 1], pch='.')
+abline(h=2*unique(smallKC$chrom))
+
+ind2 <- smallFreq$gain == 1 | smallFreq$loss == -1
+plot(smallKC[ind2,3], smallKC[ind2,4], pch='.')
+
+par(mfrow=c(1,2))
+plot(smallKC[!ind2, 2], smallKC[!ind2,3] + 2*smallKC[!ind2, 1], pch='.')
+abline(h=2*unique(smallKC$chrom))
+plot(smallKC[ind2, 2], smallKC[ind2,3] + 2*smallKC[ind2, 1], pch='.')
+abline(h=2*unique(smallKC$chrom))
+
+par(mfrow=c(1,2))
+
+fit <- lm(smallKC[ind2,4] ~ smallKC[ind2,3])
+plot(smallKC[ind2,3], smallKC[ind2,4], pch='.', col='gray')
+abline(a=coefficients(fit)[[1]], b=coefficients(fit)[[2]], col='gray')
+points((smallKC[ind2,3]+ coefficients(fit)[[1]]) * coefficients(fit)[[2]], smallKC[ind2,4] , pch='.', 
+  col='darkgray')
+abline(a=0, b=1, col='black')
+
+fitrob <- lmrob(smallKC[ind2,4] ~ smallKC[ind2,3])
+plot(smallKC[ind2,3], smallKC[ind2,4], pch='.', col='gray')
+abline(a=coefficients(fitrob)[[1]], b=coefficients(fitrob)[[2]], col='gray')
+points((smallKC[ind2,3] + coefficients(fitrob)[[1]]) * coefficients(fitrob)[[2]], smallKC[ind2,4], pch='.', 
+  col='darkgray')
+abline(a=0, b=1, col='black')
+
+diffKC <- smallKC[,c(1,2)]
+diffKCnorm <- smallKC[,c(1,2)]
+diffKCquant <- smallKC[,c(1,2)]
+diffKCnorm$diff <- (smallKC[,3] + coefficients(fitrob)[[1]]) * coefficients(fitrob)[[2]] - smallKC[,4]
+diffKC$diff <- smallKC[,3] - smallKC[,4]
+diffKCquant$diff <- KCnorm[,3] - KCnorm[,4]
+
+par(mfrow=c(2,1))
+
+plotRawCghDotPlot(KCdataSet=smallKC, mirrorLocs=hsMirrorLocs, 
+  samples=1, doFilter=T, plotTitle='LN')
+plotRawCghDotPlot(KCdataSet=smallKC, mirrorLocs=hsMirrorLocs, 
+  samples=2, doFilter=T, plotTitle='Tumor')
+
+par(mfrow=c(3,1))  
+  
+plotRawCghDotPlot(KCdataSet=diffKC, mirrorLocs=hsMirrorLocs, 
+  samples=1, doFilter=T, plotTitle='Diff non Norm')
+plotRawCghDotPlot(KCdataSet=diffKCnorm, mirrorLocs=hsMirrorLocs, 
+    samples=1, doFilter=T, plotTitle='Diff Norm')
+plotRawCghDotPlot(KCdataSet=diffKCquant, mirrorLocs=hsMirrorLocs, 
+    samples=1, doFilter=T, plotTitle='Diff quant Norm')
+
+combMat <- matrix(1:nrow(sampleInfo), ncol=2)
+combList <- vector(mode='list', length=nrow(sampleInfo)/2)
+names(combList) <- sampleInfo$NR[duplicated(sampleInfo$NR)]
+
+for (cl in 1:length(combList)) {
+  tempName <- as.numeric(names(combList))[cl]
+  combList[[cl]] <- with(sampleInfo, 
+    c(which(Type=='LN' & NR==tempName), which(Type=='Tumor' & NR==tempName)))
+}
+
+normRobustLinear <- function(KC, KCseg combMat) {
+  
+  require(multicore)
+  
+  diffList <- mclapply(combList, doLinRob, KC, KCseg)
+
+}
+
+doLinRob <- function(comb, KC, KCseg) {
+  
+  require(robustbase)
+  
+  smallKC <- KC[,c(1,2, comb)]
+  smallSeg <- subset(KCseg, samplelist=colnames(smallKC)[c(3,4)])
+  smallFreq <- glFrequency(smallSeg, .2)
+  
+  ind <- smallFreq$gain == 1 | smallFreq$loss == -1
+  
+  fitrob <- lmrob(smallKC[ind,4] ~ smallKC[ind,3])
+  
+  diffNorm <- (smallKC[,3] + coefficients(fitrob)[[1]]) * coefficients(fitrob)[[2]] - smallKC[,4]
+  
+
+}
 
 
 
