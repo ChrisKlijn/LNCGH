@@ -17,9 +17,9 @@ load('marieke_diffResults.Rda')
 
 getSegCount <- function (segFrame, originalFrame) {
   
-  segCount <- as.data.frame(table(segFrame$ID, segFrame$genotype), stringsAsFactors=F)
+  segCount <- as.data.frame(table(segFrame$ID, segFrame$subtype), stringsAsFactors=F)
   segCount <- segCount[-which(segCount$Freq == 0),]
-  colnames(segCount) <- c('TumorID','Genotype', 'NumSeg')
+  colnames(segCount) <- c('TumorID','subtype', 'NumSeg')
   
   # Add missing tumor IDs
   
@@ -29,7 +29,7 @@ getSegCount <- function (segFrame, originalFrame) {
   
   for (m in missingID) {
       rowInsert <- data.frame(TumorID=AllID[m], 
-        Genotype=originalFrame$genotype[originalFrame$ID==AllID[m]][1], 
+        subtype=originalFrame$subtype[originalFrame$ID==AllID[m]][1], 
         NumSeg=0)
       segCount <- rbind(segCount, rowInsert)    
   }
@@ -39,12 +39,13 @@ getSegCount <- function (segFrame, originalFrame) {
 
 }
 
-sampleInfoTumor <- sampleInfo[sampleInfo$Type == 'Tumor',]
-output <- KCsegDiff$output
-output <- output[-which(output$num.mark < 10),] 
-output <- output[-which(abs(output$seg.mean) < .2),]
+outputAll <- extractSeg(segResult=KCsegDiff, minMark=10, cutoff=NULL)
+outputAll$subtype <- sampleInfoTumor$Mol_subtype[match(as.numeric(outputAll$ID), sampleInfoTumor$NR)]
+  
+outputFilter <- extractSeg(segResult=KCsegDiff, minMark=10, cutoff=.2, higher='both')
+outputFilter$subtype <- sampleInfoTumor$Mol_subtype[match(as.numeric(outputFilter$ID), sampleInfoTumor$NR)]
 
-
+segCount <- getSegCount(outputFilter, outputAll)
 
 tempTable <- table(output$ID)
 tumorSegStats <- data.frame(ID=names(tempTable), nSeg=as.numeric(tempTable))
