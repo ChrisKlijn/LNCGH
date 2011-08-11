@@ -39,6 +39,8 @@ getSegCount <- function (segFrame, originalFrame) {
 
 }
 
+sampleInfoTumor <- sampleInfo[sampleInfo$Type == 'Tumor',]
+
 outputAll <- extractSeg(segResult=KCsegDiff, minMark=10, cutoff=NULL)
 outputAll$subtype <- sampleInfoTumor$Mol_subtype[match(as.numeric(outputAll$ID), sampleInfoTumor$NR)]
   
@@ -47,7 +49,14 @@ outputFilter$subtype <- sampleInfoTumor$Mol_subtype[match(as.numeric(outputFilte
 
 segCount <- getSegCount(outputFilter, outputAll)
 
-tempTable <- table(output$ID)
-tumorSegStats <- data.frame(ID=names(tempTable), nSeg=as.numeric(tempTable))
-tumorSegStats$Class <- sampleInfoTumor$BRCAness[match(tumorSegStats$ID, sampleInfoTumor$NR)]
+postscript(file='Figures/deltaSeg.eps', width=4, height=6, paper='special', horizontal=F)
+  qplot(data=segCount, x=subtype, y=NumSeg, position=position_jitter(w=0.2, h=0), 
+    color=subtype, size=I(2)) + opts(title='Number of segments in delta profile')
+dev.off()
+
+# Output all segments in delta profiles
+
+
+
+
 
