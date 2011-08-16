@@ -10,7 +10,8 @@ setwd('/home/klijn/data/smallproj/mariekeLN/')
 source('~/codeChris/generalFunctionsR/chris_cghdata_analysis.R')
 source('~/codeChris/generalFunctionsR/chris_DNAcopy_utils.R')
 
-load('diffDataMarieke.Rda')
+library(ggplot2)
+
 load('marieke_diffResults.Rda')
 
 # Functions
@@ -39,6 +40,9 @@ getSegCount <- function (segFrame, originalFrame) {
 
 }
 
+# Load clinical data
+sampleInfo <- read.delim('Clin_data_tumorLN.txt', stringsAsFactors=F)
+sampleInfo <- sampleInfo[order(sampleInfo$File_name),]
 sampleInfoTumor <- sampleInfo[sampleInfo$Type == 'Tumor',]
 
 outputAll <- extractSeg(segResult=KCsegDiff, minMark=10, cutoff=NULL)
