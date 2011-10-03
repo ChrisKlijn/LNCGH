@@ -9,6 +9,7 @@
 # WD - medoid
 setwd('/home/klijn/data/smallproj/mariekeLN/')
 source('~/codeChris/generalFunctionsR/chris_cghdata_analysis.R')
+source('~/codeChris/generalFunctionsR/chris_delta_functions.R')
 
 # Load KC data
 load('~/data/smallproj/mariekeLN/DNACopy/mariekeData.Rda')
@@ -20,27 +21,6 @@ library(KCsmart)
 library(preprocessCore)
 library(multicore)
 data(hsMirrorLocs)
-
-# Functions
-
-doLinRob <- function(comb, KC, KCseg, thres=.2) {
-  
-  require(robustbase)
-  
-  smallKC <- KC[,c('chrom', 'maploc', comb)]
-  smallSeg <- subset(KCseg, samplelist=comb)
-  smallFreq <- glFrequency(smallSeg, thres)
-  
-  # Select only those probes that exceed the threshold for either gains or losses
-  ind <- smallFreq$gain == 1 | smallFreq$loss == -1
-  
-  fitrob <- lmrob(smallKC[ind,4] ~ smallKC[ind,3])
-  
-  diffNorm <- (smallKC[,3] + coefficients(fitrob)[[1]]) * coefficients(fitrob)[[2]] - smallKC[,4]
-  
-  return(diffNorm)
-  
-}
 
 # Body Code
 
@@ -73,7 +53,7 @@ for (nr in unique(sampleInfo$NR)) {
   combList[[as.character(nr)]] <- tempComb
 }
 
-diffList <- mclapply(combList, doLinRob, KC, KCseg)
+diffList <- mclapply(combList, deltaLinear, KC, KCseg)
 KCdiff <- cbind(KC[,c('chrom', 'maploc')], as.data.frame(diffList, optional=T))
 
 
