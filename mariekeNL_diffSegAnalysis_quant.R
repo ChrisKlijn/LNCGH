@@ -10,11 +10,14 @@
 setwd('/home/klijn/data/smallproj/mariekeLN/')
 source('~/codeChris/generalFunctionsR/chris_cghdata_analysis.R')
 source('~/codeChris/generalFunctionsR/chris_DNAcopy_utils.R')
+source('~/codeChris/smallProjects/MariekeLN/mariekeNL_overlapSeg_functions.R')
 
 library(ggplot2)
 library(DNAcopy)
+library(GenomicRanges)
 
 load('marieke_diffResults_quant_UD2.Rda')
+load('DNACopy/mariekeData.Rda')
 
 # Functions
 
@@ -51,10 +54,12 @@ sampleInfoTumor <- sampleInfo[sampleInfo$Type == 'Tumor',]
 
 outputAll <- extractSeg(segResult=KCsegDiff, minMark=10, cutoff=NULL)
 
+outputAll <- outputAll[order(outputAll$chrom, outputAll$loc.start),]
 outputAll$subtype <- sampleInfoTumor$Mol_subtype[
   match(outputAll$ID, sampleInfoTumor$NR)]
   
 outputFilter <- extractSeg(segResult=KCsegDiff, minMark=10, cutoff=.2, higher='both')
+outputFilter <- outputFilter[order(outputFilter$chrom, outputFilter$loc.start),]
 outputFilter$subtype <- sampleInfoTumor$Mol_subtype[
   match(outputFilter$ID, sampleInfoTumor$NR)]
 
@@ -67,12 +72,53 @@ dev.off()
 
 # Output all segments in delta profiles
 
-write.table(x=outputFilter, file="deltaSegTable_UD2.txt", col.names=TRUE,  quote=FALSE, row.names=FALSE, sep='\t')
-
-a <- subset(KCsegDiff, samplelist=c('355', '322', '811'))
+write.table(x=outputFilter, file="deltaSegTable_UD2.txt", 
+  col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
 
 pdf(file='Figures/segmentDiff_UD2.pdf', width=20, height=20)
 plot(KCsegDiff, plot.type='chrombysample', cex.axis=10)
 dev.off()
 
+# Calculate overlaps
+
+filterSegs <- with(outputFilter, GRanges(
+  seqnames = Rle(paste('chr', chrom)),
+  ranges=IRanges(start=loc.start,end=loc.end), 
+  seg.mean=seg.mean, 
+  num.mark=num.mark,
+  ID=ID))
+
+overlMat <- as.matrix(findOverlaps(filterSegs))
+overlMat <- overlMat[(overlMat[,1] - overlMat[,2]) != 0,]
+filterSegsOverlap <- filterSegs[unique(overlMat[,1])]
+outputFilterOverlap <- outputFilter[unique(overlMat[,1]),]
+
+for (chr in unique(outputFilterOverlap$chrom)) {
+
+  chrsubset <- subset(outputFilterOverlap, chrom==chr)
+  uniqID <- unique(chrsubset$ID)
+  IDcolors <- rich.colors(n=length(uniqID))
+  names(IDcolors) <- unique(chrsubset$ID)
+
+  png(file=paste('Figures/overlSeg', chr, '.png', sep=''), 
+    width=1000, height=700)
+
+  layout(rbind(matrix(c(
+    seq(1,length(uniqID)),
+    seq(1,length(uniqID))+length(uniqID)), nrow=2), 
+    rep(length(uniqID)*2+1, times=length(uniqID))))
+
+  for (n in uniqID) {
+    
+    IDsubs <- subset(chrsubset, ID==n)
+    plotSegsID(IDsubs, KC, Type='Tumor', IDcolors)
+    plotSegsID(IDsubs, KC, Type='LN', IDcolors)
+
+  }
+
+  plotSegsPerChrom(outputFilterOverlap, chr, KCdiff)
+
+  dev.off()
+
+}
 

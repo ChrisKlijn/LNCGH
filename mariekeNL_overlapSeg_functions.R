@@ -9,6 +9,8 @@
 getPairRanges <- function(tumSamp, LNSamp, KCseg) {
   # Obtain two ranges objects from segmented output
 
+  require(GenomicRanges)
+
   tumOutp <- KCseg$output[(KCseg$output$ID %in% tumSamp),]
   LNOutp <- KCseg$output[(KCseg$output$ID %in% LNSamp),]
 
@@ -94,6 +96,82 @@ plotNonOverlap <- function(patientNR, segList, KC,
     abline(h=mean(KC[plotProbes,LNSamp]), col=colors()[571])
   }
   dev.off()
+
+}
+
+plotSegsPerChrom <- function (outputFrame, chromNum, KC) {
+  
+  require(gplots)
+
+  chrsubset <- subset(outputFrame, chrom==chromNum)
+#  IDcolors <- brewer.pal(length(unique(chrsubset$ID)),"Dark2")
+  IDcolors <- rich.colors(n=length(unique(chrsubset$ID)))
+  names(IDcolors) <- unique(chrsubset$ID)
+
+  # initialize plot
+
+  with(chrsubset, plot(0, 0, type='n', 
+    xlim=c(min(loc.start), max(loc.end)),
+    ylim=c((min(seg.mean, 0)-abs(min(seg.mean))*.2), 
+      (max(seg.mean, 0) + abs(max(seg.mean)) * .2)),
+    main=paste('Chromosome', chrom[1]), adj=1))
+  abline(h=0, col='black')
+
+  for (i in 1:nrow(chrsubset)) {
+    
+    with(chrsubset, lines(
+      x=c(loc.start[i], loc.end[i]),
+      y=c(seg.mean[i], seg.mean[i]),
+      col=IDcolors[as.character(ID[i])],
+      lwd=5))
+    probeInd <- with(chrsubset, 
+      loc.start[i] < KC$maploc & loc.end[i] > KC$maploc & 
+      chrom[i]==KC$chrom)
+    with(chrsubset, points(
+      x=KC$maploc[probeInd], y=KC[probeInd, as.character(ID[i])],
+      col=IDcolors[as.character(ID[i])], pch='.'))
+
+  }
+
+  #Grab the plotting region dimensions
+  rng <- par("usr")
+  #Call your legend with plot = FALSE to get its dimensions
+  lg <- legend(rng[1],rng[2], names(IDcolors), lwd=5, col = IDcolors,
+    plot = FALSE, horiz=T)
+  #Once you have the dimensions in lg, use them to adjust
+  # the legend position
+  #Note the use of xpd = NA to allow plotting outside plotting region             
+  legend(rng[1],rng[4] + lg$rect$h, names(IDcolors), lwd=5, 
+    col = IDcolors,plot = TRUE, xpd = NA, horiz=T)
+
+
+}
+
+plotSegsID <- function (outputFrame, KC, Type='Tumor', IDcolors) {
+  
+  thisID <- outputFrame$ID[1]
+
+  hybID <- sampleInfo$File_name[sampleInfo$NR == as.numeric(thisID) &
+    sampleInfo$Type == Type]
+ 
+  with(chrsubset, plot(0, 0, type='n', 
+    xlim=c(min(loc.start), max(loc.end)),
+    ylim=c(-1, 1),
+    main=paste(Type, thisID), adj=0))
+  abline(h=0, col='black')
+  
+  for (i in 1:nrow(outputFrame)) {
+    probeInd <- with(outputFrame, 
+      loc.start[i] < KC$maploc & loc.end[i] > KC$maploc & 
+      chrom[i]==KC$chrom)    
+    lines(x=c(outputFrame$loc.start[i], outputFrame$loc.end[i]),
+      y=c(mean(KC[probeInd, hybID]), mean(KC[probeInd, hybID])),
+      col=IDcolors[thisID],
+      lwd=5)
+    points(x=KC$maploc[probeInd], y=KC[probeInd, hybID],
+      col=IDcolors[thisID], pch='.')
+
+  }
 
 }
 
