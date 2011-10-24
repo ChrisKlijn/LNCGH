@@ -122,3 +122,47 @@ for (chr in unique(outputFilterOverlap$chrom)) {
 
 }
 
+testOverlap <- function (segM) {
+    if (segM > .2) {
+      return('gain')
+    }
+    else {
+      if (segM < -.2) {
+        return('loss')
+      }
+      else {
+        return('none')
+      }
+    }
+  }
+
+for (i in 1:nrow(outputFilterOverlap)) {
+
+  tumFile <- sampleInfo$File_name[sampleInfo$NR == 
+    outputFilterOverlap$ID[i] & sampleInfo$Type == 'Tumor']
+  LNFile <- sampleInfo$File_name[sampleInfo$NR == 
+  outputFilterOverlap$ID[i] & sampleInfo$Type == 'LN']
+  segProbes <- KC$maploc > outputFilterOverlap$loc.start[i] &
+    KC$maploc < outputFilterOverlap$loc.end[i] &
+    KC$chrom == outputFilterOverlap$chrom[i]
+  outputFilterOverlap$tumState[i] <- 
+    testOverlap(mean(KC[segProbes, tumFile]))
+  outputFilterOverlap$LNState[i] <- 
+    testOverlap(mean(KC[segProbes, LNFile]))
+
+}
+
+outputFilterOverlap$combineState <- paste(outputFilterOverlap$tumState,
+  outputFilterOverlap$LNState, sep='->')
+
+write.table(x=outputFilterOverlap, file="deltaSegOvelapTable_UD2.txt", 
+  col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
+
+uniqueChromIDCombs <- !duplicated(paste(outputFilterOverlap$ID, outputFilterOverlap$chrom, sep='-'))
+
+overlapChangeTable <- table(outputFilterOverlap$combineState[
+  uniqueChromIDCombs], outputFilterOverlap$chrom[uniqueChromIDCombs])
+
+write.table(x=overlapChangeTable, file="overlapChangeTable.txt", 
+  col.names=TRUE,  quote=FALSE, row.names=T, sep='\t')
+
