@@ -87,6 +87,43 @@ for (n in uniqPat) {
   
 }
 
-
 save(file='marieke_diffResults_quant_UD2.Rda', 
   list=c('KCdiff','KCsegDiff'))
+
+# Do quantile norm plots
+
+# Reorder for nice visualization of Tumor and LN pairs
+sampleInfo <- sampleInfo[order(sampleInfo$NR, sampleInfo$Type),]
+KC <- KC[,c('chrom', 'maploc', sampleInfo$File_name)]
+
+dataMatrix <- as.matrix(KC[,3:ncol(KC)])
+dataMatrix <- normalize.quantiles(dataMatrix)
+KCnorm <- KC
+KCnorm[,3:ncol(KCnorm)] <- dataMatrix
+
+png(file="Figures/preNormBoxplot.png", width=1000, height=800)
+boxplot(KC[,3:ncol(KC)], las=2, main='boxplots beform qnorm', 
+  names=paste(sampleInfo$NR, sampleInfo$Type))
+dev.off()
+
+png(file="Figures/postNormBoxplot.png", width=1000, height=800)
+boxplot(KCnorm[,3:ncol(KCnorm)], las=2, main='boxplots after qnorm', 
+  names=paste(sampleInfo$NR, sampleInfo$Type))
+dev.off()
+
+library(multicore)
+mclapply(as.list(seq(1, nrow(sampleInfo), 2)), plotTwoSamples, sampleInfoSet=sampleInfo, KCset=KC)
+
+plotTwoSamples <- function(i, sampleInfoSet, KCset) {
+  fileName <- paste("Figures/dotplot_", sampleInfoSet$NR[i], ".png", sep='')
+  png(file=fileName, width=1200, height=800)    
+  par(mfrow=c(2,1))
+  plotRawCghDotPlot(KCdataSet=KCset, mirrorLocs=hsMirrorLocs, samples=i,
+   doFilter=T, plotTitle=paste(sampleInfoSet$Type[i], sampleInfoSet$NR[i]),
+   setylim=c(-1,1), setcex=1)
+  plotRawCghDotPlot(KCdataSet=KCset, mirrorLocs=hsMirrorLocs, samples=i+1,
+   doFilter=T, plotTitle=paste(sampleInfoSet$Type[i+1], sampleInfoSet$NR[i+1]),
+   setylim=c(-1,1), setcex=1)
+  dev.off()
+}
+
