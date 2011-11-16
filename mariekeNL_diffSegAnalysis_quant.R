@@ -62,13 +62,26 @@ outputFilter <- extractSeg(segResult=KCsegDiff, minMark=10, cutoff=.2, higher='b
 outputFilter <- outputFilter[order(outputFilter$chrom, outputFilter$loc.start),]
 outputFilter$subtype <- sampleInfoTumor$Mol_subtype[
   match(outputFilter$ID, sampleInfoTumor$NR)]
+outputFilter$BRCAness <- sampleInfoTumor$BRCAness[
+  match(outputFilter$ID, sampleInfoTumor$NR)]
 
 segCount <- getSegCount(outputFilter, outputAll)
+segCount$BRCAness <- 
+  sampleInfoTumor$BRCAness[match(segCount$TumorID, sampleInfoTumor$NR)]
 
-postscript(file='Figures/deltaSeg_quant_UD2.eps', width=4, height=6, paper='special', horizontal=F)
-  qplot(data=segCount, x=subtype, y=NumSeg, position=position_jitter(w=0.2, h=0), 
-    color=subtype, size=I(2)) + opts(title='Number of segments (UD) in delta profile')
-dev.off()
+qplot(data=segCount, x=subtype, y=NumSeg, 
+  position=position_jitter(w=0.2, h=0),
+  color=subtype, size=I(2)) + 
+  opts(title='Number of segments (UD) in delta profile')
+ggsave(filename='Figures/deltaSeg_quant_UD2.eps')
+ggsave(filename='Figures/deltaSeg_quant_UD2.png')
+
+qplot(data=segCount, x=BRCAness, y=NumSeg, 
+  position=position_jitter(w=0.2, h=0),
+  color=subtype, size=I(2)) + 
+  opts(title='Number of segments (UD) in delta profile')
+ggsave(filename='Figures/deltaSeg_quant_UD2_BRCAness.eps')
+ggsave(filename='Figures/deltaSeg_quant_UD2_BRCAness.png')
 
 # Output all segments in delta profiles
 
