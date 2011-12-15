@@ -10,8 +10,6 @@ setwd('D:/MariekeLN')
 require(KCsmart)
 data(hsMirrorLocs)
 
-
-
 ## unavg DNAcopy file of 135k profile
 tmp135 <- read.table('ng135kprofile_unavgDNAcopy.txt',
   sep="\t", header=T, stringsAsFactors=F)
@@ -24,8 +22,6 @@ clin <- read.table('Clin_data_tumorLN-131211.txt', sep="\t", header=T, stringsAs
 # for plotting etc
 clin$id <- paste(clin$NR, clin$Type, sep="")
 
-
-
 # folder with DNAcopy files
 setwd('DNACopy')
 
@@ -35,13 +31,9 @@ files <- dir(pattern='.txt' )
 files <- cbind(files, short= gsub('(^[0-9NGA]{4,9}).*', '\\1', files))
 # bind name of the sample
 lookup <- cbind(files, clin$id[match(files[,'short'], clin$File_name)] ) 
-
-
-
 # create folder for mapped profiles and for plots of the mapped profiles
 dir.create('mapped')
 dir.create('plots')
-
 
 # loop over all txt files
 for (i in 1:nrow(lookup)) {
@@ -84,8 +76,6 @@ for (i in 1:nrow(lookup)) {
       dev.off()
   
       }
-
-
 
 # Perform classification of nimblegen profiles. For this I've loaded the mapped files into
 # the classifier tool. There are 3 models currently which are exactly the same as the BRCA1
@@ -167,7 +157,6 @@ rat135$chrom <- fixChrom(rat135$chrom)
 seg135$chrom <- fixChrom(seg135$chrom)
 
 dir.create('translationPlots')
-
   
 for (i in 3:(ncol(rat135))) {
   png(paste('translationPlots/', colnames(rat135)[i],'.png', sep=""), height=768, width=1024)
