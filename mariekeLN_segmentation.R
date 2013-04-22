@@ -7,28 +7,25 @@
 # -------------------------------------------------------------------
 
 # WD
-setwd('~/data/smallproj/mariekeLN/')
-source('~/codeChris/generalFunctionsR/chris_cghdata_analysis.R')
+projectDir <- '~/Projects/NKIProjects/LNCGH/'
+setwd(projectDir)
+source('~/OldNKI/code Backup/codeChris/generalFunctionsR/chris_cghdata_analysis.R')
 
 # Libraries
 library(DNAcopy)
 
 # Load data
-load('~/data/smallproj/mariekeLN/DNACopy/mariekeData.Rda')
-
-# Load clinical data
-sampleInfo <- read.delim('Clin_data_tumorLN.txt', stringsAsFactors=F)
-sampleInfo <- sampleInfo[order(sampleInfo$File_name),]
+load(file.path(projectDir, 'newDataImport.RData'))
 
 # Check if the samples are ordered the same in the dataframe and the sampleinfo
-all.equal(colnames(KC)[3:ncol(KC)], sampleInfo$File_name)
+all.equal(colnames(rawData)[3:ncol(rawData)], sampleInfo$File_name)
 
-CNA.KC <- CNA(as.matrix(KC[,3:ncol(KC)]), KC$chrom, KC$maploc, data.type=c("logratio"), 
-  sampleid=colnames(KC)[3:ncol(KC)])
-CNA.KC.smoothed <- smooth.CNA(CNA.KC)
-KCseg <- segment(CNA.KC.smoothed, verbose=1, undo.splits='sdundo')
+CNA.rawData <- CNA(as.matrix(rawData[,3:ncol(rawData)]), rawData$chrom, rawData$maploc, data.type=c("logratio"), 
+  sampleid=colnames(rawData)[3:ncol(rawData)])
+CNA.rawData.smoothed <- smooth.CNA(CNA.rawData)
+rawDataseg <- segment(CNA.rawData.smoothed, verbose=1, undo.splits='sdundo')
 
-names(KCseg$data) <- gsub('X', '', names(KCseg$data))
-KCseg$output$ID <- gsub('X', '', KCseg$output$ID)
+names(rawDataseg$data) <- gsub('X', '', names(rawDataseg$data))
+rawDataseg$output$ID <- gsub('X', '', rawDataseg$output$ID)
 
-save(file='marieke_segResult.Rda', list=c('KCseg')) 
+save(file='marieke_segResult.Rda', list=c('rawDataseg')) 
