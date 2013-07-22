@@ -41,10 +41,10 @@ sigReg_TN <- getSigRegionsCompKC(KCcollTLNcomp_TN, fdr=.05)
 KCcollTLN_Lum <- calcSpmCollection(
   data=KCTum[,colnames(KCTum) %in% c('maploc',
                                      'chrom',
-                                     sampleInfoTumor$NR[sampleInfoTumor$Mol_subtype %in% 'TN'])], 
+                                     sampleInfoTumor$NR[sampleInfoTumor$Mol_subtype %in% 'luminal'])], 
   data2=KCLN[,colnames(KCTum) %in% c('maploc',
                                      'chrom',
-                                     sampleInfoTumor$NR[sampleInfoTumor$Mol_subtype %in% 'TN'])], 
+                                     sampleInfoTumor$NR[sampleInfoTumor$Mol_subtype %in% 'luminal'])], 
   mirrorLocs=hsMirrorLocs)
 KCcollTLNcomp_Lum <- compareSpmCollection(KCcollTLN_Lum, nperms=1000)
 sigReg_Lum <- getSigRegionsCompKC(KCcollTLNcomp_Lum, fdr=.05)
